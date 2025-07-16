@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cuestionario PAES M1 de Matemáticas</title>
@@ -9,6 +8,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- MathJax CDN for LaTeX rendering -->
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        // Configuración de MathJax
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']] // Define los delimitadores para matemáticas en línea
+            },
+            svg: {
+                fontCache: 'global' // Mejora el rendimiento del renderizado
+            },
+            options: {
+                // Se eliminó la configuración 'renderActions.find' ya que causaba el error.
+                // MathJax.typesetPromise() ya maneja el escaneo de elementos pasados.
+            }
+        };
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -244,13 +258,9 @@
         const detailedResultsContainer = document.getElementById('detailed-results');
         const restartButton = document.getElementById('restart-button');
 
-        // Function to render LaTeX using MathJax
+        // La función renderLaTeX ya no necesita hacer nada especial, MathJax lo hace automáticamente
         function renderLaTeX(text) {
-            // MathJax will process elements with class 'math-inline' or 'math-display'
-            // We'll wrap the text in a span with a class that MathJax is configured to process.
-            // By default, MathJax processes content between $...$ for inline math and $$...$$ for display math.
-            // We'll let MathJax handle the parsing of the `$` delimiters directly from the innerHTML.
-            return text; // MathJax will automatically find and render the LaTeX within the elements.
+            return text;
         }
 
         function displayQuestion() {
@@ -271,9 +281,12 @@
                 optionsContainer.appendChild(button);
             });
 
-            // After updating the DOM, tell MathJax to typeset the new content
+            // Después de actualizar el DOM, le decimos a MathJax que procese el nuevo contenido
+            // Usamos setTimeout con 0 para asegurar que el DOM se actualice antes de que MathJax intente procesarlo.
             if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise([questionTextElement, optionsContainer]);
+                setTimeout(() => {
+                    MathJax.typesetPromise([questionTextElement, optionsContainer]);
+                }, 0);
             }
 
             updateNavigationButtons();
@@ -348,9 +361,11 @@
             scoreDisplay.textContent = score;
             totalQuestionsDisplay.textContent = questions.length;
 
-            // After updating the DOM with results, tell MathJax to typeset them
+            // Después de actualizar el DOM con los resultados, le decimos a MathJax que los procese
             if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise([detailedResultsContainer]);
+                setTimeout(() => {
+                    MathJax.typesetPromise([detailedResultsContainer]);
+                }, 0);
             }
         }
 
@@ -369,7 +384,11 @@
         restartButton.addEventListener('click', restartQuiz);
 
         // Initial display
-        displayQuestion();
+        // Ejecutamos displayQuestion dentro de un setTimeout para dar tiempo a MathJax a cargar.
+        // Opcionalmente, se podría usar window.onload o un evento DOMContentLoaded.
+        window.addEventListener('DOMContentLoaded', (event) => {
+            displayQuestion();
+        });
     </script>
 </body>
 </html>
