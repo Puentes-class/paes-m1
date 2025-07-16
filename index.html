@@ -1,10 +1,374 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Prueba GitHub Pages</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario PAES M1 de Matemáticas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax CDN for LaTeX rendering -->
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .question-text {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+        .option-button {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            text-align: left;
+            font-size: 1rem;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .option-button:hover:not(.selected):not(.correct):not(.incorrect) {
+            background-color: #e2e8f0;
+            border-color: #94a3b8;
+        }
+        .option-button.selected {
+            background-color: #bfdbfe;
+            border-color: #3b82f6;
+            color: #1e40af;
+            font-weight: 500;
+        }
+        .option-button.correct {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+            font-weight: 500;
+        }
+        .option-button.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+            font-weight: 500;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .nav-button.primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border: none;
+        }
+        .nav-button.primary:hover {
+            background-color: #2563eb;
+        }
+        .nav-button.secondary {
+            background-color: #e2e8f0;
+            color: #475569;
+            border: 1px solid #94a3b8;
+        }
+        .nav-button.secondary:hover {
+            background-color: #cbd5e1;
+        }
+        .results-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .result-item.correct {
+            border-left: 5px solid #10b981;
+        }
+        .result-item.incorrect {
+            border-left: 5px solid #ef4444;
+        }
+        .result-item p {
+            margin-bottom: 5px;
+            color: #334155;
+        }
+        .result-item strong {
+            color: #1e40af;
+        }
+        .result-item .rationale {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #cbd5e1;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>¡Hola, GitHub Pages funciona!</h1>
-    <p>Si ves esto, tu sitio está configurado correctamente.</p>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Cuestionario PAES M1 de Matemáticas</h1>
+
+        <div id="quiz-screen">
+            <div id="question-display">
+                <p id="question-text" class="question-text"></p>
+                <div id="options-container" class="flex flex-col gap-3">
+                    <!-- Options will be loaded here by JavaScript -->
+                </div>
+            </div>
+            <div class="navigation-buttons">
+                <button id="prev-button" class="nav-button secondary" disabled>Anterior</button>
+                <button id="next-button" class="nav-button primary">Siguiente</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden results-container">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Resultados del Cuestionario</h2>
+            <p class="text-xl text-gray-700 mb-6">Obtuviste <span id="score-display" class="font-bold text-blue-600"></span> de <span id="total-questions-display" class="font-bold text-blue-600"></span> preguntas correctas.</p>
+            <div id="detailed-results">
+                <!-- Detailed results will be loaded here by JavaScript -->
+            </div>
+            <button id="restart-button" class="nav-button primary mt-6">Reiniciar Cuestionario</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "¿Cuál es el resultado de la siguiente operación: $ \\frac{1}{3} + \\frac{1}{4} - \\frac{1}{2} $?",
+                options: ["$\\frac{7}{12}$", "$\\frac{1}{12}$", "$-\\frac{1}{12}$", "$\\frac{5}{12}$"],
+                correctAnswer: "$\\frac{1}{12}$",
+                rationale: "Realiza la suma de las primeras dos fracciones: $\\frac{1}{3} + \\frac{1}{4} = \\frac{4}{12} + \\frac{3}{12} = \\frac{7}{12}$. Luego, resta $ \\frac{1}{2} $: $\\frac{7}{12} - \\frac{1}{2} = \\frac{7}{12} - \\frac{6}{12} = \\frac{1}{12}$."
+            },
+            {
+                question: "Resuelve la siguiente ecuación: $ 3(x+1) = x-1 $",
+                options: ["$x = 2$", "$x = -2$", "$x = 1$", "$x = -1$"],
+                correctAnswer: "$x = -2$",
+                rationale: "La ecuación es $3(x+1) = x-1$. Distribuyendo el 3: $3x + 3 = x - 1$. Restando $x$ de ambos lados: $2x + 3 = -1$. Restando 3 de ambos lados: $2x = -4$. Dividiendo por 2: $x = -2$."
+            },
+            {
+                question: "Encuentra los valores de $x$ e $y$ que satisfacen el siguiente sistema de ecuaciones: $x+y=3$ y $ x-y=1 $",
+                options: ["$x = 1, y = 2$", "$x = 2, y = 1$", "$x = 0, y = 3$", "$x = 3, y = 0$"],
+                correctAnswer: "$x = 2, y = 1$",
+                rationale: "Usando sustitución o eliminación, se puede encontrar que $x=2$ y $y=1$. Por ejemplo, de la primera ecuación $y = 3 - x$. Sustituyendo en la segunda: $x - (3-x) = 1 \\Rightarrow x - 3 + x = 1 \\Rightarrow 2x = 4 \\Rightarrow x = 2$. Sustituyendo $x=2$ en $y=3-x \\Rightarrow y=3-2 \\Rightarrow y=1$."
+            },
+            {
+                question: "Factoriza la siguiente expresión: $ x^2 - 4x + 4 $",
+                options: ["$(x-2)(x+2)$", "$(x+2)^2$", "$(x-2)^2$", "$(x-4)(x+1)$"],
+                correctAnswer: "$(x-2)^2$",
+                rationale: "La expresión $x^2-4x+4$ es un trinomio cuadrado perfecto, que se factoriza como $(x-2)(x-2)$, o $(x-2)^2$."
+            },
+            {
+                question: "Calcula el área de un triángulo cuya base mide $5 \\text{ cm}$ y su altura es de $4 \\text{ cm}$.",
+                options: ["$20 \\text{ cm}^2$", "$10 \\text{ cm}^2$", "$9 \\text{ cm}^2$", "$40 \\text{ cm}^2$"],
+                correctAnswer: "$10 \\text{ cm}^2$",
+                rationale: "El área de un triángulo se calcula con la fórmula $\\frac{1}{2} \\times \\text{base} \\times \\text{altura}$. Por lo tanto, $\\frac{1}{2} \\times 5 \\text{ cm} \\times 4 \\text{ cm} = \\frac{1}{2} \\times 20 \\text{ cm}^2 = 10 \\text{ cm}^2$."
+            },
+            {
+                question: "En un triángulo rectángulo, los catetos miden $3 \\text{ cm}$ y $4 \\text{ cm}$. ¿Cuánto mide la hipotenusa?",
+                options: ["$5 \\text{ cm}$", "$7 \\text{ cm}$", "$\\sqrt{7} \\text{ cm}$", "$25 \\text{ cm}$"],
+                correctAnswer: "$5 \\text{ cm}$",
+                rationale: "Según el Teorema de Pitágoras ($a^2 + b^2 = c^2$), $3^2 + 4^2 = c^2 \\Rightarrow 9 + 16 = c^2 \\Rightarrow 25 = c^2 \\Rightarrow c = \\sqrt{25} = 5 \\text{ cm}$."
+            },
+            {
+                question: "Calcula la media aritmética (promedio) de los siguientes números: $5, 6, 8, 10$.",
+                options: ["$6$", "$7$", "$7.25$", "$8$"],
+                correctAnswer: "$7.25$",
+                rationale: "La media (promedio) se calcula sumando todos los valores y dividiendo por la cantidad de valores: $\\frac{5+6+8+10}{4} = \\frac{29}{4} = 7.25$."
+            },
+            {
+                question: "¿Cuál es la probabilidad de obtener un 4 al lanzar un dado de seis caras?",
+                options: ["$\\frac{1}{6}$", "$\\frac{1}{2}$", "$\\frac{4}{6}$", "$1$"],
+                correctAnswer: "$\\frac{1}{6}$",
+                rationale: "Hay 6 resultados posibles al lanzar un dado (1, 2, 3, 4, 5, 6) y solo uno de ellos es un 4."
+            },
+            {
+                question: "Dada la función $ f(x) = 2x + 3 $, ¿cuánto es $ f(2) $?",
+                options: ["$5$", "$8$", "$7$", "$10$"],
+                correctAnswer: "$7$",
+                rationale: "Para $f(x) = 2x + 3$, si $x = 2$, entonces $f(2) = 2(2) + 3 = 4 + 3 = 7$."
+            },
+            {
+                question: "¿Cuál es el dominio de la función $ f(x) = 3x - 1 $?",
+                options: ["Todos los números reales.", "Solo números positivos.", "Solo números enteros.", "Números reales mayores que cero."],
+                correctAnswer: "Todos los números reales.",
+                rationale: "Para una función lineal como $ f(x) = 3x - 1 $, el dominio son todos los números reales, ya que no hay restricciones (divisiones por cero, raíces cuadradas de números negativos, logaritmos de números no positivos, etc.) que limiten los valores que $x$ puede tomar."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = Array(questions.length).fill(null); // To store user's selected option index
+
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const questionTextElement = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const scoreDisplay = document.getElementById('score-display');
+        const totalQuestionsDisplay = document.getElementById('total-questions-display');
+        const detailedResultsContainer = document.getElementById('detailed-results');
+        const restartButton = document.getElementById('restart-button');
+
+        // Function to render LaTeX using MathJax
+        function renderLaTeX(text) {
+            // MathJax will process elements with class 'math-inline' or 'math-display'
+            // We'll wrap the text in a span with a class that MathJax is configured to process.
+            // By default, MathJax processes content between $...$ for inline math and $$...$$ for display math.
+            // We'll let MathJax handle the parsing of the `$` delimiters directly from the innerHTML.
+            return text; // MathJax will automatically find and render the LaTeX within the elements.
+        }
+
+        function displayQuestion() {
+            const questionData = questions[currentQuestionIndex];
+            questionTextElement.innerHTML = renderLaTeX(questionData.question);
+            optionsContainer.innerHTML = ''; // Clear previous options
+
+            questionData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.innerHTML = renderLaTeX(option);
+                button.onclick = () => selectAnswer(index);
+
+                // Highlight if already answered
+                if (userAnswers[currentQuestionIndex] !== null && userAnswers[currentQuestionIndex] === index) {
+                    button.classList.add('selected');
+                }
+                optionsContainer.appendChild(button);
+            });
+
+            // After updating the DOM, tell MathJax to typeset the new content
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([questionTextElement, optionsContainer]);
+            }
+
+            updateNavigationButtons();
+        }
+
+        function selectAnswer(selectedIndex) {
+            userAnswers[currentQuestionIndex] = selectedIndex;
+            // Remove 'selected' class from all options
+            Array.from(optionsContainer.children).forEach((button, index) => {
+                button.classList.remove('selected');
+                if (index === selectedIndex) {
+                    button.classList.add('selected');
+                }
+            });
+        }
+
+        function updateNavigationButtons() {
+            prevButton.disabled = currentQuestionIndex === 0;
+            if (currentQuestionIndex === questions.length - 1) {
+                nextButton.textContent = 'Ver Resultados';
+            } else {
+                nextButton.textContent = 'Siguiente';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            score = 0;
+            detailedResultsContainer.innerHTML = '';
+
+            questions.forEach((question, index) => {
+                const userAnswerIndex = userAnswers[index];
+                const userAnswerText = userAnswerIndex !== null ? question.options[userAnswerIndex] : 'No respondida';
+                const isCorrect = userAnswerText === question.correctAnswer;
+
+                if (isCorrect) {
+                    score++;
+                }
+
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('result-item', isCorrect ? 'correct' : 'incorrect');
+
+                resultItem.innerHTML = `
+                    <p><strong>Pregunta ${index + 1}:</strong> ${renderLaTeX(question.question)}</p>
+                    <p>Tu respuesta: <span class="${isCorrect ? 'text-green-700' : 'text-red-700'}">${renderLaTeX(userAnswerText)}</span></p>
+                    <p>Respuesta correcta: <span class="text-blue-700">${renderLaTeX(question.correctAnswer)}</span></p>
+                    <div class="rationale">
+                        <p><strong>Explicación:</strong> ${question.rationale}</p>
+                    </div>
+                `;
+                detailedResultsContainer.appendChild(resultItem);
+            });
+
+            scoreDisplay.textContent = score;
+            totalQuestionsDisplay.textContent = questions.length;
+
+            // After updating the DOM with results, tell MathJax to typeset them
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([detailedResultsContainer]);
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = Array(questions.length).fill(null);
+            quizScreen.classList.remove('hidden');
+            resultsScreen.classList.add('hidden');
+            displayQuestion();
+        }
+
+        // Event Listeners
+        nextButton.addEventListener('click', nextQuestion);
+        prevButton.addEventListener('click', previousQuestion);
+        restartButton.addEventListener('click', restartQuiz);
+
+        // Initial display
+        displayQuestion();
+    </script>
 </body>
 </html>
